@@ -1,0 +1,5 @@
+numpy
+face_recognition
+opencv-python
+PySide6>=6.6
+git+https://github.com/ageitgey/face_recognition_models
