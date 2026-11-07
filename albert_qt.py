@@ -26,9 +26,11 @@ import os
 import pickle
 import random
 import sys
+import re
+import configparser
 from collections import deque
 from datetime import datetime
-
+from pathlib import Path
 from PySide6.QtCore import QPointF, Qt, QThread, QTimer, Signal, QRectF,QRect, QEvent
 from PySide6.QtGui import (QColor, QCursor, QImage, QKeyEvent, QPainter, QPainterPath, QPen, QTextCharFormat,
                            QTextCursor)
@@ -75,55 +77,7 @@ LABS = [
     ("ingresso", "Ingresso e segreteria", "Informazioni e iscrizioni."),
 ]
 
-QSS = f"""
-* {{ font-family: 'Outfit', 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 18px; color: {TEXT}; }}
-QWidget#root, QStackedWidget, QScrollArea, QScrollArea > QWidget > QWidget {{ background: {BG}; border: 0; }}
-QFrame#header {{ border-bottom: 1px solid {LINE}; }}
-QFrame#nav {{ background: {PANEL}; border-top: 1px solid {LINE}; }}
-QLabel#brand {{ font-weight: 800; font-size: 22px; }}
-QLabel#brandSmall, QLabel#lead, QLabel#note {{ color: {MUTE}; }}
-QLabel#h1 {{ font-size: 46px; font-weight: 800; }}
-QLabel#h2 {{ font-size: 28px; font-weight: 800; }}
-QLabel#lead {{ font-size: 20px; }}
-QLabel#note {{ font-size: 15px; }}
-QLabel#warn, QLabel#goto {{ color: {AMBER}; font-size: 15px; }}
-QLabel#chip {{ background: {PANEL}; border-radius: 16px; padding: 6px 14px; font-size: 15px; color: {MUTE}; }}
-QPushButton {{ background: {PANEL2}; border: 0; border-radius: 18px; padding: 14px 22px; min-height: 36px; font-weight: 600; }}
-QPushButton:pressed {{ background: #2a4f7d; }}
-QPushButton:focus {{ outline: none; border: 3px solid {CYAN}; }}
-QPushButton#main, QPushButton#send {{ background: {CYAN}; color: #05252a; }}
-QPushButton#send {{ font-weight: 800; }}
-QPushButton#stop {{ background: {RED}; color: #2a0606; font-weight: 800; font-size: 20px; border-radius: 14px; min-height: 40px; padding: 6px 26px; }}
-QPushButton#stop:pressed {{ background: #e04848; }}
-QPushButton#navbtn {{ background: transparent; color: {MUTE}; border-radius: 16px; min-height: 48px; padding: 6px; }}
-QPushButton#navbtn:checked {{ background: {PANEL2}; color: {TEXT}; border-bottom: 4px solid {CYAN}; }}
-QPushButton#chipbtn {{ border-radius: 22px; padding: 8px 18px; }}
-QPushButton#pad {{ font-size: 26px; border-radius: 18px; padding: 0; }}
-QPushButton#pad:pressed, QPushButton#dp:pressed {{ background: {CYAN}; color: #05252a; }}
-QPushButton#dp {{ font-size: 34px; border-radius: 22px; padding: 0; }}
-QPushButton#lab {{ border-radius: 12px; padding: 8px 16px; min-height: 32px; }}
-QFrame#card {{ background: {PANEL}; border-radius: 20px; border-left: 6px solid {CYAN}; }}
-QFrame#card QLabel {{ background: transparent; }}
-QFrame#stat {{ background: {PANEL}; border-radius: 14px; }}
-QFrame#stat QLabel {{ background: transparent; }}
-QLabel#me {{ background: {CYAN}; color: #05252a; border-radius: 20px; border-bottom-right-radius: 6px; padding: 12px 18px; }}
-QLabel#bot {{ background: {PANEL}; border-radius: 20px; border-bottom-left-radius: 6px; padding: 12px 18px; }}
-QLineEdit {{ background: {PANEL}; border: 2px solid {LINE}; border-radius: 16px; padding: 10px 18px; min-height: 36px; }}
-QLineEdit:focus {{ border-color: {CYAN}; }}
-QSlider::groove:horizontal {{ background: {PANEL}; height: 8px; border-radius: 4px; }}
-QSlider::sub-page:horizontal {{ background: {CYAN}; border-radius: 4px; }}
-QSlider::handle:horizontal {{ background: {CYAN}; width: 30px; margin: -12px 0; border-radius: 15px; }}
-QPushButton#seg {{ padding: 6px 26px; min-height: 28px; border-radius: 16px; }}
-QPushButton#seg:checked {{ background: {CYAN}; color: #05252a; }}
-QCheckBox {{ spacing: 10px; font-size: 16px; }}
-QCheckBox::indicator {{ width: 26px; height: 26px; border-radius: 7px; border: 2px solid {LINE}; background: {PANEL}; }}
-QCheckBox::indicator:checked {{ background: {CYAN}; border-color: {CYAN}; }}
-QPlainTextEdit#console {{ background: #08121f; border: 1px solid {LINE}; border-radius: 12px; padding: 8px;
-  font-family: 'DejaVu Sans Mono', 'Noto Sans Mono', monospace; font-size: 14px; }}
-QScrollBar:vertical {{ background: transparent; width: 10px; }}
-QScrollBar::handle:vertical {{ background: {LINE}; border-radius: 5px; min-height: 30px; }}
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
-"""
+BASE_DIR = Path(__file__).resolve().parent
 
 
 def label(text="", name=None, wrap=False):
@@ -877,10 +831,30 @@ class MainWindow(QWidget):
         super().closeEvent(e)
 
 
+def carica_stile(app: QApplication, qss_path: str, conf_path: str) -> None:
+    conf = configparser.ConfigParser()
+    conf.read(conf_path, encoding="utf-8")
+    colori = dict(conf["colors"]) if "colors" in conf else {}
+
+    with open(qss_path, encoding="utf-8") as f:
+        qss = f.read()
+
+    hex_ok = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
+
+    def sostituisci(m: re.Match) -> str:
+        nome = m.group(1)
+        valore = colori.get(nome)
+        if valore is None or not hex_ok.match(valore):
+            return m.group(0)
+        return valore
+
+    qss = re.sub(r"@([A-Za-z_][A-Za-z0-9_]*)", sostituisci, qss)
+    app.setStyleSheet(qss)
+
 def main():
     app = QApplication(sys.argv)
-    app.setStyleSheet(QSS)
-    bus = applog.setup()                       # da qui print, errori e log finiscono anche nella Console
+    carica_stile(app,(BASE_DIR/"styles/main_style.qss"),(BASE_DIR/"styles/themecolor.conf"))
+    bus = applog.setup()
     log = logging.getLogger("albert.app")
     if "--sim" in sys.argv:
         log.info("modalità simulazione: nessun Pico collegato")

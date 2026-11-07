@@ -1,0 +1,279 @@
+/* ===== Base ===== */
+* {
+    font-family: 'Outfit', 'Noto Sans', 'DejaVu Sans', sans-serif;
+    font-size: 18px;
+    color: @text;
+}
+
+QWidget#root,
+QStackedWidget,
+QScrollArea,
+QScrollArea > QWidget > QWidget {
+    background: @bg;
+    border: 0;
+}
+
+/* ===== Header / Nav ===== */
+QFrame#header {
+    border-bottom: 1px solid @line;
+}
+
+QFrame#nav {
+    background: @panel;
+    border-top: 1px solid @line;
+}
+
+/* ===== Etichette ===== */
+QLabel#brand {
+    font-weight: 800;
+    font-size: 22px;
+}
+
+QLabel#brandSmall,
+QLabel#lead,
+QLabel#note {
+    color: @mute;
+}
+
+QLabel#h1 {
+    font-size: 46px;
+    font-weight: 800;
+}
+
+QLabel#h2 {
+    font-size: 28px;
+    font-weight: 800;
+}
+
+QLabel#lead {
+    font-size: 20px;
+}
+
+QLabel#note {
+    font-size: 15px;
+}
+
+QLabel#warn,
+QLabel#goto {
+    color: @amber;
+    font-size: 15px;
+}
+
+QLabel#chip {
+    background: @panel;
+    border-radius: 16px;
+    padding: 6px 14px;
+    font-size: 15px;
+    color: @mute;
+}
+
+/* ===== Pulsanti ===== */
+QPushButton {
+    background: @panel2;
+    border: 0;
+    border-radius: 18px;
+    padding: 14px 22px;
+    min-height: 36px;
+    font-weight: 600;
+}
+
+QPushButton:pressed {
+    background: @pressed;
+}
+
+QPushButton:focus {
+    outline: none;
+    border: 3px solid @cyan;
+}
+
+QPushButton#main,
+QPushButton#send {
+    background: @cyan;
+    color: @on_cyan;
+}
+
+QPushButton#send {
+    font-weight: 800;
+}
+
+QPushButton#stop {
+    background: @red;
+    color: @on_red;
+    font-weight: 800;
+    font-size: 20px;
+    border-radius: 14px;
+    min-height: 40px;
+    padding: 6px 26px;
+}
+
+QPushButton#stop:pressed {
+    background: @red_pressed;
+}
+
+QPushButton#navbtn {
+    background: transparent;
+    color: @mute;
+    border-radius: 16px;
+    min-height: 48px;
+    padding: 6px;
+}
+
+QPushButton#navbtn:checked {
+    background: @panel2;
+    color: @text;
+    border-bottom: 4px solid @cyan;
+}
+
+QPushButton#chipbtn {
+    border-radius: 22px;
+    padding: 8px 18px;
+}
+
+QPushButton#pad {
+    font-size: 26px;
+    border-radius: 18px;
+    padding: 0;
+}
+
+QPushButton#pad:pressed,
+QPushButton#dp:pressed {
+    background: @cyan;
+    color: @on_cyan;
+}
+
+QPushButton#dp {
+    font-size: 34px;
+    border-radius: 22px;
+    padding: 0;
+}
+
+QPushButton#lab {
+    border-radius: 12px;
+    padding: 8px 16px;
+    min-height: 32px;
+}
+
+QPushButton#seg {
+    padding: 6px 26px;
+    min-height: 28px;
+    border-radius: 16px;
+}
+
+QPushButton#seg:checked {
+    background: @cyan;
+    color: @on_cyan;
+}
+
+/* ===== Card e statistiche ===== */
+QFrame#card {
+    background: @panel;
+    border-radius: 20px;
+    border-left: 6px solid @cyan;
+}
+
+QFrame#card QLabel {
+    background: transparent;
+}
+
+QFrame#stat {
+    background: @panel;
+    border-radius: 14px;
+}
+
+QFrame#stat QLabel {
+    background: transparent;
+}
+
+/* ===== Chat ===== */
+QLabel#me {
+    background: @cyan;
+    color: @on_cyan;
+    border-radius: 20px;
+    border-bottom-right-radius: 6px;
+    padding: 12px 18px;
+}
+
+QLabel#bot {
+    background: @panel;
+    border-radius: 20px;
+    border-bottom-left-radius: 6px;
+    padding: 12px 18px;
+}
+
+/* ===== Input ===== */
+QLineEdit {
+    background: @panel;
+    border: 2px solid @line;
+    border-radius: 16px;
+    padding: 10px 18px;
+    min-height: 36px;
+}
+
+QLineEdit:focus {
+    border-color: @cyan;
+}
+
+/* ===== Slider ===== */
+QSlider::groove:horizontal {
+    background: @panel;
+    height: 8px;
+    border-radius: 4px;
+}
+
+QSlider::sub-page:horizontal {
+    background: @cyan;
+    border-radius: 4px;
+}
+
+QSlider::handle:horizontal {
+    background: @cyan;
+    width: 30px;
+    margin: -12px 0;
+    border-radius: 15px;
+}
+
+/* ===== Checkbox ===== */
+QCheckBox {
+    spacing: 10px;
+    font-size: 16px;
+}
+
+QCheckBox::indicator {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    border: 2px solid @line;
+    background: @panel;
+}
+
+QCheckBox::indicator:checked {
+    background: @cyan;
+    border-color: @cyan;
+}
+
+/* ===== Console ===== */
+QPlainTextEdit#console {
+    background: @console_bg;
+    border: 1px solid @line;
+    border-radius: 12px;
+    padding: 8px;
+    font-family: 'DejaVu Sans Mono', 'Noto Sans Mono', monospace;
+    font-size: 14px;
+}
+
+/* ===== Scrollbar ===== */
+QScrollBar:vertical {
+    background: transparent;
+    width: 10px;
+}
+
+QScrollBar::handle:vertical {
+    background: @line;
+    border-radius: 5px;
+    min-height: 30px;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+}  
