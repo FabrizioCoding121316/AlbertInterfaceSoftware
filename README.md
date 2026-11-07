@@ -2,6 +2,12 @@
 ## Albert Interface Software
 
 Software creato con la libreria `PySide6` (QT) per il robot che fa parte del progetto del **Laboratorio di Robotica** dell'[IIS Albert Einstein di Vimercate](https://einsteinvimercate.edu.it/) creato dagli studenti, questo software ha delle funzionalità come una interfaccia interattiva con una faccina che segue a colui che la guarda, in più ha delle opzioni di assitente inteligente con AI e una parte di controllo manuale per gli operatori.
+
+## Screenshots & Video
+
+[![Watch the video](https://img.youtube.com/vi/mfeCNVGbGb0/hqdefault.jpg)](https://www.youtube.com/watch?v=mfeCNVGbGb0)   
+
+
 ## Prequisiti
 - Python: **versione 3.14**  o superiore
 - Speech Dispatcher
@@ -53,7 +59,4 @@ Variabili: `PICO_PORT` (default /dev/ttyACM0), `OPERATOR_PIN` (serve a mettere i
 
 ## Ringraziamenti
 Ringraziamo a [@Annoiw38](https://github.com/Annoiw38) per l'uso di una versione del suo media Player per creare la classe MainWindow del programma.
-## Screenshots & Video
-
-[![Watch the video](https://img.youtube.com/vi/mfeCNVGbGb0/hqdefault.jpg)](https://www.youtube.com/watch?v=mfeCNVGbGb0)   
 
