@@ -424,6 +424,12 @@ class ConsoleView(QWidget):
 
 # ============================================================ finestra principale
 class MainWindow(QWidget):
+    TIMEOUT_MS = 10_000 #10 secondi
+    #             ^
+    #          Secondi
+
+    #Eventi di interazione
+    EVENT_INTPUT = {QEvent.Type.MouseButtonPress,QEvent.Type.MouseButtonDblClick,QEvent.Type.Wheel,QEvent.Type.KeyPress,QEvent.Type.TouchBegin}
     def __init__(self, robot: Robot, bus, kiosk=False, camera=True, save_faces=True):
         super().__init__()
         self.bus = bus
@@ -470,8 +476,18 @@ class MainWindow(QWidget):
         self._start_vision(camera, save_faces)
         self.go(P_ROBOT)
         self.refresh()
+        #Questa parte del codice servirebbe per mettere u timer per rimettetre la schermata del robot
+        self.timer_inpt = QTimer(self)
+        self.timer_inpt.setSingleShot(True)
+        self.timer_inpt.setInterval(self.TIMEOUT_MS)
+        self.timer_inpt.timeout.connect(self._on_inactive)
+        self.timer_inpt.start()
+        # Filtro eventi su tutta l'applicazione
+        QApplication.instance().installEventFilter(self)
 
     # ---------------------------------------------------------- costruzione
+
+
     def _build_header(self):
         h = QFrame(); h.setObjectName("header")
         l = QHBoxLayout(h); l.setContentsMargins(20, 10, 20, 10); l.setSpacing(16)
@@ -493,7 +509,7 @@ class MainWindow(QWidget):
             self.nav_group.addButton(b, i); l.addWidget(b)
         return n
 
-    def _build_home(self):
+    def _build_home(self) -> QWidget:
         w = QWidget(); l = QHBoxLayout(w); l.setContentsMargins(28, 22, 28, 22); l.setSpacing(28)
         l.addWidget(self._new_face(), 1)
         col = QVBoxLayout(); col.setSpacing(12); col.addStretch(1)
@@ -516,13 +532,13 @@ class MainWindow(QWidget):
         self.faces.append(f)
         return f
 
-    def _build_face_only(self):
+    def _build_face_only(self) -> QWidget:
         w = QWidget(); l = QHBoxLayout(w); l.setContentsMargins(28, 22, 28, 22)
         f = self._new_face()
         l.addWidget(f, 1)
         self._face_only_page = w
-        w.installEventFilter(self)
-        f.installEventFilter(self)
+        #w.installEventFilter(self)
+        #f.installEventFilter(self)
         return w
 
     def _start_vision(self, camera, save_faces):
@@ -545,6 +561,15 @@ class MainWindow(QWidget):
     def _on_person(self, nx, ny, presente):
         for f in self.faces:
             f.set_person(nx, ny, presente)
+
+    def _on_inactive(self):
+        logging.getLogger("albert.ui").info("Time out finito")
+        if self.hold.isActive():
+            self.timer_inpt.start()
+            return
+        if self.stack.currentIndex() != P_ROBOT:
+            self.go(P_ROBOT)
+        
 
     def _vision_stopped(self):          # telecamera non apribile o thread terminato: si torna al cursore
         for f in self.faces:
@@ -678,7 +703,10 @@ class MainWindow(QWidget):
         self.ctl_pages.setCurrentIndex(i)
 
     def eventFilter(self, obj, ev):
-        if (ev.type() == QEvent.MouseButtonPress
+        ev_type = ev.type()
+        if ev_type in self.EVENT_INTPUT:
+            self.timer_inpt.start()
+        if (ev_type == QEvent.Type.MouseButtonPress
                 and self.stack.currentIndex() == P_ROBOT
                 and (obj is self._face_only_page or obj.parent() is self._face_only_page)):
             self.go(P_HOME)
