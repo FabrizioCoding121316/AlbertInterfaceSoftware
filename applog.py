@@ -74,8 +74,12 @@ def setup() -> LogBus:
     sys.stderr = Tee(sys.__stderr__, "ERROR", bus)
 
     qlog = logging.getLogger("albert.qt")
-    levels = {QtMsgType.QtDebugMsg: logging.DEBUG, QtMsgType.QtInfoMsg: logging.INFO,
-              QtMsgType.QtWarningMsg: logging.WARNING, QtMsgType.QtCriticalMsg: logging.ERROR,
-              QtMsgType.QtFatalMsg: logging.CRITICAL}
+    levels = {
+        QtMsgType.QtDebugMsg: logging.DEBUG,
+        QtMsgType.QtInfoMsg: logging.INFO,
+        QtMsgType.QtWarningMsg: logging.WARNING,
+        QtMsgType.QtCriticalMsg: logging.ERROR,
+        QtMsgType.QtFatalMsg: logging.CRITICAL
+    }
     qInstallMessageHandler(lambda mt, ctx, msg: qlog.log(levels.get(mt, logging.INFO), msg))
     return bus
