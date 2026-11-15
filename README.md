@@ -54,7 +54,7 @@ Variabili: `PICO_PORT` (default /dev/ttyACM0), `OPERATOR_PIN` (serve a mettere i
 
 ## Documentation
 
-- [Documentation](https://linktodocumentation)
+- [Documentation](https://albertinterfacesoftware-docs.readthedocs.io/it/latest/)
 
 
 ## Ringraziamenti
