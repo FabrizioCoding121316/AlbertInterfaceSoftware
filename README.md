@@ -24,7 +24,7 @@ Consiglio: Per prima cosa [ creare un virtual enviroment di **Python**](https://
     #Per avviare assieme al robot e con un pin scelto
     OPERATOR_PIN=4821 python3 albert_qt.py
     #Senza pin, pin di default (1234)
-    python3 albert_qt.py
+    python3 main_ui.py
 
     # L'uso della variabile OPERATOR_PIN viene spiegato dopo
 
