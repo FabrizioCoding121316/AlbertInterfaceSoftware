@@ -47,6 +47,8 @@ class MainWindow(QWidget):
         self.assistant = asst.Assistant(self)
         self.assistant.answered.connect(self._on_answer)
         self.tts = None
+        self.camera = camera
+        self.save_faces = save_faces
         if QTextToSpeech is not None:
             try:
                 self.tts = QTextToSpeech(self)
@@ -109,6 +111,10 @@ class MainWindow(QWidget):
             b.clicked.connect(lambda _=False, i=i: self.go(i))
             self.nav_group.addButton(b, i); l.addWidget(b)
         return n
+    def _new_face(self):
+        f = Face()
+        self.faces.append(f)
+        return f
 
     def _build_home(self) -> QWidget:
         w = QWidget(); l = QHBoxLayout(w); l.setContentsMargins(28, 22, 28, 22); l.setSpacing(28)
@@ -127,11 +133,6 @@ class MainWindow(QWidget):
         col.addStretch(1)
         l.addLayout(col, 1)
         return w
-
-    def _new_face(self):
-        f = Face()
-        self.faces.append(f)
-        return f
 
     def _build_face_only(self) -> QWidget:
         w = QWidget(); l = QHBoxLayout(w); l.setContentsMargins(28, 22, 28, 22)
@@ -315,15 +316,27 @@ class MainWindow(QWidget):
         return super().eventFilter(obj, ev)
 
     # ---------------------------------------------------------- navigazione
+    def on_faces_menu(self, i):
+        if i ==P_HOME or i== P_ROBOT:
+            return True
+        else:
+            return False
+
+
     def go(self, i):
         self._drive_release()
         self.stack.setCurrentIndex(i)
         self.nav_group.button(i).setChecked(True)
         self.nav.setVisible(i != P_ROBOT)
+        if self.on_faces_menu(i) and not self.worker.isRunning():
+            self._start_vision(self.camera,self.save_faces)
+        if not self.on_faces_menu(i):
+            self.stop_vision()
         if i == P_CHAT and not self._chat_started:
             self._chat_started = True
             start_text= "Chiedimi degli indirizzi di studio,dell’Open Day o di me."
             self._on_answer(start_text)
+        
         self.refresh()
 
     # ---------------------------------------------------------- laboratori / chat
@@ -456,5 +469,5 @@ class MainWindow(QWidget):
 
     def closeEvent(self, e):
         self.stop_vision()
-        self.robot.shutdown()      # nessuno al controllo: il robot sta fermo
+        self.robot.shutdown()      # nessuno al controllo: il robot è fermo
         super().closeEvent(e)

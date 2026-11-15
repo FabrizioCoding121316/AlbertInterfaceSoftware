@@ -43,8 +43,7 @@ def main():
     if OPERATOR_PIN == "1234":
         log.warning("PIN operatore di default: imposta OPERATOR_PIN prima di usare il robot con il pubblico")
     robot = Robot(simulate="--sim" in sys.argv)
-    win = MainWindow(robot, bus, kiosk="--kiosk" in sys.argv, camera="--no-camera" not in sys.argv,
-                     save_faces="--no-salva-volti" not in sys.argv)
+    win = MainWindow(robot, bus, kiosk="--kiosk" in sys.argv, camera="--no-camera" not in sys.argv,save_faces="--no-salva-volti" not in sys.argv)
     app.aboutToQuit.connect(win.stop_vision)
     app.aboutToQuit.connect(robot.shutdown)
     if "--kiosk" in sys.argv:
