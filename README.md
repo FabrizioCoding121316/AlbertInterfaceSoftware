@@ -22,7 +22,7 @@ Consiglio: Per prima cosa [ creare un virtual enviroment di **Python**](https://
 
 ## Avvio
     #Per avviare assieme al robot e con un pin scelto
-    OPERATOR_PIN=4821 python3 albert_qt.py
+    OPERATOR_PIN=4821 python3 main_ui.py
     #Senza pin, pin di default (1234)
     python3 main_ui.py
 
@@ -43,7 +43,7 @@ Variabili: `PICO_PORT` (default /dev/ttyACM0), `OPERATOR_PIN` (serve a mettere i
 `ANTHROPIC_MODEL`(Modello usato per l'assistente).
 
 ## File
-- `albert_qt.py` – interfaccia (volto animato, Laboratori, Assistente, Controllo con PIN) e avvio
+- `main_ui.py` – interfaccia (volto animato, Laboratori, Assistente, Controllo con PIN) e avvio
 - `robot.py` – seriale (QSerialPort), telemetria, watchdog guida, accesso operatore, simulazione
 - `assistant.py` – FAQ + Claude (rete asincrona di Qt), aggancio `navigate_to()` per Nav2
 - `pico/main.py` – firmware MicroPython (identico all'originale)
