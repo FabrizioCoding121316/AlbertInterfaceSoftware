@@ -10,8 +10,7 @@ from PySide6.QtWidgets import (QApplication, QButtonGroup, QFrame, QGridLayout, 
 
 import assistant as asst
 from robot import Robot
-from classes.config import (AMBER, CYAN, DB_FILE, GREEN, IMG_DIR, LABS, MUTE, PANEL, P_CHAT, P_CTL, P_HOME,
-                    P_LABS, P_ROBOT, RED)
+from classes.config import (AMBER, CYAN, DB_FILE, GREEN, IMG_DIR, LABS, MUTE, PANEL, RED,Page)
 from classes.utils import label
 from classes.face_widget import Face
 from classes.console_view import ConsoleView
@@ -77,7 +76,7 @@ class MainWindow(QWidget):
             b.setFocusPolicy(Qt.NoFocus)
         self.setFocusPolicy(Qt.StrongFocus)
         self._start_vision(camera, save_faces)
-        self.go(P_ROBOT)
+        self.go(Page.P_ROBOT)
         self.refresh()
         #Questa parte del codice servirebbe per mettere u timer per rimettetre la schermata del robot
         self.timer_inpt = QTimer(self)
@@ -123,8 +122,8 @@ class MainWindow(QWidget):
         col.addWidget(label("Ciao, sono Albert.", "h1", True))
         col.addWidget(label("Ti accompagno nella scuola e rispondo alle tue domande. Da dove vuoi iniziare?", "lead", True))
         col.addSpacing(10)
-        for text, dest, main in (("Scopri i laboratori", P_LABS, True), ("Parla con me", P_CHAT, False),
-                                 ("Accompagnami in una visita", P_LABS, False)):
+        for text, dest, main in (("Scopri i laboratori", Page.P_LABS, True), ("Parla con me", Page.P_CHAT, False),
+                                 ("Accompagnami in una visita", Page.P_LABS, False)):
             b = QPushButton(text); b.setMinimumHeight(64); b.setMaximumWidth(440)
             if main:
                 b.setObjectName("main")
@@ -169,8 +168,8 @@ class MainWindow(QWidget):
         if self.hold.isActive():
             self.timer_inpt.start()
             return
-        if self.stack.currentIndex() != P_ROBOT:
-            self.go(P_ROBOT)
+        if self.stack.currentIndex() != Page.P_ROBOT:
+            self.go(Page.P_ROBOT)
         
 
     def _vision_stopped(self):          # telecamera non apribile o thread terminato: si torna al cursore
@@ -213,7 +212,7 @@ class MainWindow(QWidget):
             lambda _a, mx: self.log_area.verticalScrollBar().setValue(mx))
         l.addWidget(self.log_area, 1)
         chips = QHBoxLayout(); chips.setSpacing(10)
-        for q in ("Quali indirizzi ci sono?", "Come funziona l’Open Day?", "Chi sei?"):
+        for q in ("Quali indirizzi ci sono?", "Come funziona l’Open Day?", "Chi sei? "):
             b = QPushButton(q); b.setObjectName("chipbtn")
             b.clicked.connect(lambda _=False, q=q: self.ask(q))
             chips.addWidget(b)
@@ -240,6 +239,7 @@ class MainWindow(QWidget):
         self.lbl_dots.setAlignment(Qt.AlignCenter); self.lbl_dots.setMinimumHeight(60)
         g.addWidget(self.lbl_dots)
         pad = QGridLayout(); pad.setSpacing(10)
+        self.tent = 0
         for i, k in enumerate("123456789C0⌫"):
             b = QPushButton(k); b.setObjectName("pad"); b.setFixedSize(76, 66)
             b.clicked.connect(lambda _=False, k=k: self._pin_key(k))
@@ -309,15 +309,15 @@ class MainWindow(QWidget):
         if ev_type in self.EVENT_INTPUT:
             self.timer_inpt.start()
         if (ev_type == QEvent.Type.MouseButtonPress
-                and self.stack.currentIndex() == P_ROBOT
+                and self.stack.currentIndex() == Page.P_ROBOT
                 and (obj is self._face_only_page or obj.parent() is self._face_only_page)):
-            self.go(P_HOME)
+            self.go(Page.P_HOME)
             return True
         return super().eventFilter(obj, ev)
 
     # ---------------------------------------------------------- navigazione
     def on_faces_menu(self, i):
-        if i ==P_HOME or i== P_ROBOT:
+        if i ==Page.P_HOME or i== Page.P_ROBOT:
             return True
         else:
             return False
@@ -327,15 +327,28 @@ class MainWindow(QWidget):
         self._drive_release()
         self.stack.setCurrentIndex(i)
         self.nav_group.button(i).setChecked(True)
-        self.nav.setVisible(i != P_ROBOT)
-        if self.on_faces_menu(i) and not self.worker.isRunning():
-            self._start_vision(self.camera,self.save_faces)
-        if not self.on_faces_menu(i):
-            self.stop_vision()
-        if i == P_CHAT and not self._chat_started:
-            self._chat_started = True
-            start_text= "Chiedimi degli indirizzi di studio,dell’Open Day o di me."
-            self._on_answer(start_text)
+        self.nav.setVisible(i != Page.P_ROBOT)
+        match i:
+            case Page.P_ROBOT:
+                self._robot_talk("Ciao, Sono Albert!. Ti accompagno nella scuola e rispondo alle tue domande. Da dove vuoi iniziare?")
+                if not self.worker.isRunning():
+                    self._start_vision(self.camera, self.save_faces)
+            case Page.P_HOME:
+                if not self.worker.isRunning():
+                    self._start_vision(self.camera, self.save_faces)
+                self._robot_talk("Scegli una delle opzioni. Vuoi per caso scoprire i laboratori?. Vorresti parlare con me?")
+            case Page.P_LABS:
+                self._robot_talk("Dove vuoi andare?")
+                self.stop_vision()
+            case Page.P_CHAT:
+                if not self._chat_started:
+                    self._chat_started = True
+                    start_text= "Chiedimi degli indirizzi di studio,dell’Open Day o di me."
+                    self._on_answer(start_text)
+                    self.stop_vision()
+            case Page.P_CTL:
+                self._robot_talk("Area riservata agli operatori di Albert.")
+                self.stop_vision()
         
         self.refresh()
 
@@ -343,12 +356,13 @@ class MainWindow(QWidget):
     def _goto(self, lid, name):
         ok, msg = asst.navigate_to(lid)      # aggancio per Nav2: per ora non muove il robot
         self.lbl_goto.setText(msg)
+        self._robot_talk(msg)
 
     def _add_msg(self, who, text):
         m = label(text, who, True)
         m.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        m.ensurePolished()                      # applica lo stylesheet, così il font è quello vero
-        padx, pady = 40, 28                     # padding orizzontale e verticale totale dello stylesheet: regolali
+        m.ensurePolished()
+        padx, pady = 46, 28
         maxw = max(300, int(self.log_area.viewport().width() * 0.7))
         fm = m.fontMetrics()
         # larghezza: stretta per testi corti, massimo 70% per quelli lunghi
@@ -372,6 +386,9 @@ class MainWindow(QWidget):
     def _on_answer(self, text):
         self._add_msg("bot", text)
         self.btn_send.setEnabled(True)
+        self._robot_talk(text)
+
+    def _robot_talk(self, text):
         self.robot.led_talk()
         if self.tts:
             self.tts.stop(); self.tts.say(text)
@@ -390,9 +407,14 @@ class MainWindow(QWidget):
             ok = self.robot.login(self.pin)
             self.pin = ""
             if not ok:
+                self.tent+= 1
+                self._robot_talk("Errore: Pin non riconosciuto, si sono fatti "+str(self.tent)+" tentativi. Prova di nuovo")
+                time_wait = min(1000 * (2 ** (self.tent - 1)), 30000)
                 self.pin_locked = True                       # rallenta i tentativi
                 self.lbl_dots.setText("✕ ✕ ✕ ✕"); self.lbl_dots.setStyleSheet(f"font-size:36px;letter-spacing:8px;color:{RED};")
-                QTimer.singleShot(1000, self._pin_unlock)
+                QTimer.singleShot(time_wait, self._pin_unlock)
+            else:
+                self.tent = 0
         self.refresh()
 
     def _pin_unlock(self):
@@ -425,7 +447,7 @@ class MainWindow(QWidget):
     KEYS = {Qt.Key_Up: (1, 0), Qt.Key_Down: (-1, 0), Qt.Key_Left: (0, -1), Qt.Key_Right: (0, 1)}
 
     def keyPressEvent(self, e: QKeyEvent):
-        if (e.key() in self.KEYS and not e.isAutoRepeat() and self.stack.currentIndex() == P_CTL
+        if (e.key() in self.KEYS and not e.isAutoRepeat() and self.stack.currentIndex() == Page.P_CTL
                 and self.robot.operator and self.ctl_pages.currentIndex() == 0):
             self._drive_press(*self.KEYS[e.key()])
         else:
@@ -458,7 +480,7 @@ class MainWindow(QWidget):
         self.stats["hdg"].setText(f"{round(s['hdg'])}°")
         self.stats["es"].setText("Premuto" if s["estop"] else "Libero")
         self.btn_rearm.setVisible(s["mode"] == "arresto")
-        if op and self.stack.currentIndex() == P_CTL:
+        if op and self.stack.currentIndex() == Page.P_CTL:
             for d, (bar, fill, val) in zip(s["dist"], self.bars):
                 color = RED if d < 30 else AMBER if d < 80 else GREEN
                 fill.setGeometry(0, 0, int(bar.width() * min(100, d / 2) / 100), 14)
