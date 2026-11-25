@@ -24,7 +24,7 @@ except ImportError:                     # la sintesi vocale è facoltativa
 
 # ============================================================ finestra principale
 class MainWindow(QWidget):
-    TIMEOUT_MS = 10_000 #10 secondi
+    TIMEOUT_MS = 60_000 #10 secondi
     #             ^
     #          Secondi
 
@@ -138,8 +138,6 @@ class MainWindow(QWidget):
         f = self._new_face()
         l.addWidget(f, 1)
         self._face_only_page = w
-        #w.installEventFilter(self)
-        #f.installEventFilter(self)
         return w
 
     def _start_vision(self, camera, save_faces):
@@ -248,14 +246,14 @@ class MainWindow(QWidget):
         g.addWidget(pw, 0, Qt.AlignCenter)
         # --- pannello operatore
         drive_page = QWidget(); p = QHBoxLayout(drive_page); p.setSpacing(32); p.setContentsMargins(0, 0, 0, 0)
-        dp = QGridLayout(); dp.setSpacing(10)
-        for txt, v, wv, r, c in (("▲", 1, 0, 0, 1), ("◀", 0, -1, 1, 0), ("▼", -1, 0, 1, 1), ("▶", 0, 1, 1, 2)):
-            b = QPushButton(txt); b.setObjectName("dp"); b.setFixedSize(92, 92)
-            b.pressed.connect(lambda v=v, wv=wv: self._drive_press(v, wv))
-            b.released.connect(self._drive_release)
-            dp.addWidget(b, r, c)
-        dw = QWidget(); dw.setLayout(dp)
-        p.addWidget(dw, 0, Qt.AlignCenter)
+        #dp = QGridLayout(); dp.setSpacing(10)
+        #for txt, v, wv, r, c in (("▲", 1, 0, 0, 1), ("◀", 0, -1, 1, 0), ("▼", -1, 0, 1, 1), ("▶", 0, 1, 1, 2)):
+        #    b = QPushButton(txt); b.setObjectName("dp"); b.setFixedSize(92, 92)
+        #    b.pressed.connect(lambda v=v, wv=wv: self._drive_press(v, wv))
+        #    b.released.connect(self._drive_release)
+        #    dp.addWidget(b, r, c)
+        #dw = QWidget()
+        #p.addWidget(dw, 0, Qt.AlignCenter)
         info = QVBoxLayout(); info.setSpacing(10)
         self.stats = {}
         for key, name in (("mode", "Stato"), ("speed", "Velocità"), ("hdg", "Direzione"), ("es", "Pulsante di emergenza fisico")):
@@ -328,27 +326,25 @@ class MainWindow(QWidget):
         self.stack.setCurrentIndex(i)
         self.nav_group.button(i).setChecked(True)
         self.nav.setVisible(i != Page.P_ROBOT)
+        if self.on_faces_menu(i):
+            if not self.worker.isRunning():
+                self._start_vision(self.camera, self.save_faces)
+        else:
+            self.stop_vision()
         match i:
             case Page.P_ROBOT:
-                self._robot_talk("Ciao, Sono Albert!. Ti accompagno nella scuola e rispondo alle tue domande. Da dove vuoi iniziare?")
-                if not self.worker.isRunning():
-                    self._start_vision(self.camera, self.save_faces)
+                self._robot_talk("Ciao, Sono Albert!. Ti accompagno nella scuola e rispondo alle tue domande. Da dove vuoi iniziare?")  
             case Page.P_HOME:
-                if not self.worker.isRunning():
-                    self._start_vision(self.camera, self.save_faces)
                 self._robot_talk("Scegli una delle opzioni. Vuoi per caso scoprire i laboratori?. Vorresti parlare con me?")
             case Page.P_LABS:
                 self._robot_talk("Dove vuoi andare?")
-                self.stop_vision()
             case Page.P_CHAT:
                 if not self._chat_started:
                     self._chat_started = True
                     start_text= "Chiedimi degli indirizzi di studio,dell’Open Day o di me."
                     self._on_answer(start_text)
-                    self.stop_vision()
             case Page.P_CTL:
                 self._robot_talk("Area riservata agli operatori di Albert.")
-                self.stop_vision()
         
         self.refresh()
 

@@ -6,7 +6,7 @@ Software creato con la libreria `PySide6` (QT) per il robot che fa parte del pro
 ## Screenshots & Video
 
 [![Watch the video](https://img.youtube.com/vi/mfeCNVGbGb0/hqdefault.jpg)](https://www.youtube.com/watch?v=mfeCNVGbGb0)   
-
+[![Watch the video](https://img.youtube.com/vi/mLEBJlfPBA8/hqdefault.jpg)](https://youtu.be/watch?v=mLEBJlfPBA8)
 
 ## Prequisiti
 - Python: **versione 3.14**  o superiore
@@ -39,8 +39,8 @@ Consiglio: Per prima cosa [ creare un virtual enviroment di **Python**](https://
 
 
 
-Variabili: `PICO_PORT` (default /dev/ttyACM0), `OPERATOR_PIN` (serve a mettere il pin dell'operatore, accetta solo interi), `ANTHROPIC_API_KEY` (senza, risponde con le FAQ),
-`ANTHROPIC_MODEL`(Modello usato per l'assistente).
+Variabili: `PICO_PORT` (default /dev/ttyACM0), `OPERATOR_PIN` (serve a mettere il pin dell'operatore, accetta solo interi), `GEMINI_API_KEY` (senza, risponde con le FAQ),
+`GEMINI_MODEL`(Modello usato per l'assistente).
 
 ## File
 - `main_ui.py` – interfaccia (volto animato, Laboratori, Assistente, Controllo con PIN) e avvio

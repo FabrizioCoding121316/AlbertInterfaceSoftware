@@ -1,4 +1,4 @@
-"""Assistente: FAQ locali + Claude (se c'è ANTHROPIC_API_KEY).
+"""Assistente: FAQ locali + Gemini (se c'è GEMINI_API_KEY).
 
 L'assistente NON ha alcun riferimento al robot: informa e dialoga, non guida.
 """
@@ -43,18 +43,22 @@ class Assistant(QObject):
 
     def ask(self, text: str):
         text = text[:300]
-        key = os.getenv("ANTHROPIC_API_KEY")
-        log.info("domanda di %d caratteri, risposta da %s", len(text), "Claude" if key else "FAQ")
+        key = os.getenv("GEMINI_API_KEY")
+        log.info("domanda di %d caratteri, risposta da %s", len(text), "Gemini" if key else "FAQ")
         if not key:
             self.answered.emit(faq_answer(text))
             return
-        req = QNetworkRequest(QUrl("https://api.anthropic.com/v1/messages"))
+        model = os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest")
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        req = QNetworkRequest(QUrl(url))
         req.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
-        req.setRawHeader(b"x-api-key", key.encode())
-        req.setRawHeader(b"anthropic-version", b"2023-06-01")
+        req.setRawHeader(b"x-goog-api-key", key.encode())
         req.setTransferTimeout(15000)
-        body = json.dumps({"model": os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6"), "max_tokens": 300,
-                           "system": SYSTEM, "messages": [{"role": "user", "content": text}]})
+        body = json.dumps({
+            "systemInstruction": {"parts": [{"text": SYSTEM}]},
+            "contents": [{"role": "user", "parts": [{"text": text}]}],
+            "generationConfig": {"maxOutputTokens": 1024, "temperature": 0.7},
+        })
         reply = self.net.post(req, body.encode())
         reply.finished.connect(lambda r=reply, t=text: self._done(r, t))
 
@@ -62,10 +66,14 @@ class Assistant(QObject):
         try:
             if reply.error() != QNetworkReply.NoError:
                 raise RuntimeError(reply.errorString())
-            answer = json.loads(bytes(reply.readAll()).decode())["content"][0]["text"].strip()
+            data = json.loads(bytes(reply.readAll()).decode())
+            parts = data["candidates"][0]["content"]["parts"]
+            answer = "".join(p.get("text", "") for p in parts).strip()
+            if not answer:
+                raise RuntimeError("risposta vuota")
         except Exception as e:
-            log.warning("Claude non raggiungibile (%s): uso le FAQ", e)
-            answer = faq_answer(text)     # senza rete si ripiega sulle FAQ
+            log.warning("Gemini non raggiungibile (%s): uso le FAQ", e)
+            answer = faq_answer(text)     # senza rete o oltre quota si ripiega sulle FAQ
         finally:
             reply.deleteLater()
         self.answered.emit(answer)
